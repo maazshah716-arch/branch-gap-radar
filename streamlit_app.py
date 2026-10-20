@@ -5,7 +5,7 @@ import streamlit as st
 
 APP_DIR = Path(__file__).resolve().parent
 STATIC_DASHBOARD_FILE = APP_DIR / "static" / "Branch_Gap_Radar_Pro.html"
-DASHBOARD_URL = "/app/static/Branch_Gap_Radar_Pro.html"
+DASHBOARD_URL = "/~/+/app/static/Branch_Gap_Radar_Pro.html"
 
 st.set_page_config(
     page_title="Branch Gap Radar Pro",
