@@ -70,7 +70,7 @@ st.markdown(
     <section class="launch-card">
       <div class="launch-mark">BG</div>
       <h1>Branch Gap Radar Pro</h1>
-      <p>Open the full dashboard to upload your stock Excel file, review branch gaps and download the professional multi-sheet report.</p>
+      <p>Open the full dashboard to review colour, series and size gaps, compare ideal vs actual slots, analyse share and download the professional multi-sheet report.</p>
     </section>
     """,
     unsafe_allow_html=True,

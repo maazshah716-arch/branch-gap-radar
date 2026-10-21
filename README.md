@@ -17,6 +17,11 @@ streamlit run streamlit_app.py
 4. Set the main file path to `streamlit_app.py`.
 5. Deploy the app.
 
-Open the deployed app and click **Open Branch Gap Radar Pro**. The dashboard is served from `/app/static/Branch_Gap_Radar_Pro.html`.
+Open the deployed app and click **Open Branch Gap Radar Pro**. On Streamlit Community Cloud, the dashboard is served from `/~/+/app/static/Branch_Gap_Radar_Pro.html`.
 
 The dashboard asks for the Excel file in the browser. Stock data is processed in the browser and is not included in this repository or uploaded to Streamlit.
+
+The current dashboard supports colour, series and size gap matrices, branch
+ranking, exact duplicates, product and brand share analysis, optional ideal-map
+slot compliance, and Excel report export. SheetJS and ExcelJS are embedded in
+the HTML so the data and report logic do not depend on a third-party CDN.
