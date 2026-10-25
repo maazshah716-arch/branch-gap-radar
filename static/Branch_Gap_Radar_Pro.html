@@ -1,6 +1,6 @@
 <!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Branch Gap Radar</title>
-<meta name="description" content="Branch stock gap, doubling and ideal-slot analysis dashboard.">
+<meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
 <style>
@@ -225,6 +225,8 @@ details.more summary{padding:7px 0}
 
   <section class="controls" aria-label="Filters">
     <div class="field"><label for="catSel">Category</label><select id="catSel"></select></div>
+    <div class="field"><label for="typeSel">Product type</label><select id="typeSel"></select></div>
+    <div class="field"><label for="subSel">Sub category</label><select id="subSel"></select></div>
     <div class="field"><label for="brandSel">Brand</label><select id="brandSel"></select></div>
     <div class="field"><label for="branchSel">Branch</label><select id="branchSel"></select></div>
     <div class="field"><span class="lbl">Show rows</span>
@@ -409,11 +411,125 @@ function genericInfo(brand,t){
   let size='';
   if((m=T.match(/(\d(?:\.\d+)?)\s*TON/)))size=parseFloat(m[1])+' Ton';
   else if((m=T.match(/(\d{2,3})\s*(?:"|”|INCH\b)/)))size=m[1]+'"';
+  else if((m=T.match(/(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*KG\b/)))size=parseFloat(m[1])+'/'+parseFloat(m[2])+' KG';
   else if((m=T.match(/(\d+(?:\.\d+)?)\s*KG\b/)))size=parseFloat(m[1])+' KG';
   else if((m=T.match(/(\d+(?:\.\d+)?)\s*(?:LTR|LITER|LITRE|L)\b/)))size=parseFloat(m[1])+' L';
   else if((m=T.match(/(\d+)\s*(?:GAL|GALLON)\b/)))size=m[1]+' Gal';
   else if((m=T.match(/(\d{3,4})\s*(?:W|WATT)\b/)))size=m[1]+' W';
   return {model,series,size};
+}
+
+/* ---------- product type, series, size for every category except refrigerators (read from the Item name) ---------- */
+const AC_SERIES=['SUAVE+','SUAVE','GALLANT','ELEGANCE','MEGA FLEX','MEGA','MAGNA','AVANTE','CHROME+','CHROME','CHROM+','CHROM','ECONO+','ECONO','POWERCON','EXCEL','HYPER','SPRINTER','GLAMOUR','ENERCON','PRIMA PURSENSE','ULTRA','AURA','INFINITY','ROYAL','SOLAR HYBRID','GALLANT+','AEROMAX','CHILLEX','CRUISE+','CRUISE','EXTREME+','E-COMFORT','E-SMART','ESUPREME','EECO','E-LUXURY','E-SERENA','E-BREEZE','ULTRON','PRISTINE','DIVINE','EMAX','ETECH','SNOW','IMPRINT','PREMIER','SUPER JUMBO','JUMBO','TURBO','SUBLIME','ATOM','SAVER','BOLD','EXTREME','BREEZE','ROUND FLOW','SUPER GOLD','HEAVEN','ELEMENT','SMART COOL','LUX'];
+const TV_NAMED=/\b(KORE|PRISMAX|APOLLO|DELTA|CANVAS|NEXUS|FUSION|TITANIUM)(\s?\+)?/;
+const lexClean=t=>' '+String(t).replace(/[^A-Z0-9+]+/g,' ').trim()+' ';
+function lexMatch(T,list){const t=lexClean(T);let b=null;for(const k of list){if(t.includes(lexClean(k))&&(!b||k.length>b.length))b=k}return b}
+
+/* AC series: brand-specific rules read from the Item name (marketing name where the name has one, otherwise the model family code) */
+const KEN_AC=['E-COMFORT PRO','E-COMFORT','ESUPREME PRO','E-SMART ONYX','E-SMART PLATINIUM','E-SMART PURA','EECO ULTRA','E-LUXURY','E-SERENA','E-OASIS','E-BREEZE','E-FREEDOM','LUXURY PLUS','LUXURY PRO','LUXURY ULTRA','GLORY PRO','GLORY PLUS','GLORY ULTRA'];
+const ORI_AC=['DIVINE','SNOW','IMPRINT','AURA','INFINITY','PREMIER','NOVA','NEO','GIGATRON','AUX/PLATINUM','MIRROR'];
+function acSeries(brand,T0){
+  const b=String(brand).toLowerCase();let m;const T=T0.replace(/OYNX/g,'ONYX');
+  const pick=list=>{const t=lexClean(T);for(const k of list)if(t.includes(lexClean(k)))return k;return null};
+  if((m=T.match(/SOLAR HYBRID-?\s?(IV|III|II|I)\b/)))return 'SOLAR HYBRID-'+m[1];
+  if(b==='gree'){if((m=T.match(/\b(?:G[SF]-?)?\d{2}([A-Z]{2,5})/)))return m[1];if(/\bGUD/.test(T))return 'GUD';return ''}
+  if(b==='haier'){if((m=T.match(/\bH(?:SU|PU|BU|CFU)-?\d{2}([A-Z]+)/)))return m[1];return ''}
+  if(b==='tcl'){let r=(T.match(/TAC-\d{2}(.*)$/)||T.match(/\b\d{2}(T\d.*)$/)||[])[1];if(!r)return '';
+    r=r.replace(/\(.*?\)/g,' ').replace(/\*+/g,'');const tk=r.split(/[-\s]+/).filter(Boolean),t0=tk[0]||'',t1=tk[1]||'';
+    if(/^T\d$/.test(t0)&&/^[A-Z]{2,}$/.test(t1))return t0+(t1==='PRO'?' ':'-')+t1;
+    if(t0==='SVN'&&/^(AI|EX)$/.test(t1))return 'SVN-'+t1;
+    return t0}
+  if(b==='kenwood'){const k=pick(KEN_AC);if(k)return k;return (m=T.match(/\b(K[A-Z]{2})-?\d/))?m[1]:''}
+  if(b==='dawlance'){let r=T.replace(/^.*?\d(?:\.\d+)?\s*TON\s*/,'');
+    r=r.replace(/^DAC-?\s*/,'').replace(/\(.*$/,'').replace(/\s-DS\b.*$/,'');r=r.split(/\s\d{2}\b/)[0];
+    r=r.replace(/\b(T3|WHITE|SILVER|BLACK|WB|CO|NEW|HOME WHIZ)\b/g,' ').replace(/\s+\+/g,'+').replace(/\bCHROM\b/,'CHROME').replace(/\s+/g,' ').trim();return r}
+  if(b==='orient'){const k=pick(ORI_AC);if(k)return k==='MIRROR'?'SUPER MIRROR':k;
+    const t=lexClean(T);
+    if(t.includes(' ULTRON ')){const v=T.match(/ULTRON.*?\b(KING|LUNAR|BOLD|MEGA)\b/);return v?'ULTRON '+v[1]:'ULTRON'}
+    if(t.includes(' ULTRA '))return 'ULTRA';
+    if(/\bAK-?\d{2}/.test(T))return 'AK';
+    return '(no series name)'}
+  if(b.includes('electrolux'))return /\bLUX\b/.test(T)?'LUX':'';
+  if(b==='midea'){const k=pick(['EXTREME+','EXTREME','BREEZE','ROUND FLOW','ECO','TITAN']);if(k)return k;return (m=T.match(/\b(M[A-Z]{2,4})(?=\d|-)/))?m[1]:'(no series name)'}
+  if(b.includes('hisense')||b==='united'){if((m=T.match(/\b\d{2}([A-Z]{2}\d[0-9A-Z])/)))return m[1];return ''}
+  if(b==='pel'){const k=pick(['JUMBO PRIME+','JUMBO PRIME','JUMBO PRO','SUPER JUMBO','TURBO','SUBLIME','ATOM','SAVER','BOLD']);return k||''}
+  if(b==='homage'){return (m=T.match(/\b(H[A-Z]{2})-?\d{4}/))?m[1]:''}
+  if(b.includes('eco')&&b.includes('star')){return (m=T.match(/\bE[SFK]-?\d{2}([A-Z]{2})/))?m[1]:''}
+  if(b==='acson'){return (m=T.match(/\b(A\d[A-Z]{2,3})/))?m[1]:''}
+  if(b==='lg'){if(/\bS4NW/.test(T))return 'S4NW';return (m=T.match(/\b\d{3}([A-Z]{3})\b/))?m[1]:''}
+  if(b.includes('panasonic')){if((m=T.match(/\bUE\d{2}([A-Z]+)/)))return m[1];if((m=T.match(/\bCS-([A-Z]{2})\d{2}/)))return m[1];return (m=T.match(/\b\d{2}([A-Z]{3})\b/))?m[1]:''}
+  if(b==='samsung'){return (m=T.match(/\bAR\d{2}([A-Z]{4})/))?m[1]:''}
+  if(b==='daikin'){return (m=T.match(/\bFTX([A-Z])/))?'FTX'+m[1]:''}
+  if(b==='c-life'){return (m=T.match(/CI-\d{2}([A-Z]+\d*)/))?m[1]:''}
+  if(b==='enviro'){return (m=T.match(/EAC-\d{2}([A-Z]+)/))?m[1]:''}
+  if(b.includes('american')){return pick(['ROYAL','HEAVEN'])||''}
+  return '';
+}
+function avType(T,sub){
+  if(/\d{2,3}\s*"/.test(T)&&/\b(LED|TV|QLED|OLED)\b/.test(T))return 'LED TV';
+  if(/SOUND\s?BAR/.test(T))return 'Sound Bar';
+  if(/HOME\s?THEATE?R/.test(T))return 'Home Theater';
+  if(/PLAY\s?STATION|\bPS-?\d\b/.test(T))return 'Gaming Console';
+  if(/\bDVD\b|BD PLAYER|BLU\s?-?RAY|BLUE\s?RAY/.test(T))return 'DVD / Blu-ray Player';
+  if(/ANDROID BOX|TV BOX/.test(T))return 'Android Box';
+  if(/SPEAKER|SOUND SYSTEM/.test(T))return 'Speaker';
+  if(/\b(LED|TV|QLED|OLED)\b/.test(T)||/\d{2,3}\s*"/.test(T))return 'LED TV';
+  const S=String(sub||'').toLowerCase();
+  if(/speaker/.test(S))return 'Speaker';if(/sound ?bar/.test(S))return 'Sound Bar';if(/theat/.test(S))return 'Home Theater';
+  return 'Other Audio/Video';
+}
+function typeOther(cat,sub,T){
+  if(/audio/i.test(cat))return avType(T,sub);
+  if(/air conditioner/i.test(cat)){if(/PORTABLE/.test(T))return 'Portable';if(/CASSETTE/.test(T))return 'Cassette';if(/DUCT/.test(T))return 'Duct';if(/CONVERTIBLE|\bHCFU/.test(T))return 'Convertible';if(/FLOOR STANDING|\bFS\b/.test(T))return 'Floor Standing';return 'Split';}
+  const SB=String(sub||'').toLowerCase();
+  if(/washing/i.test(cat)){if(/top load/.test(SB))return 'Top Load';if(/front load/.test(SB))return 'Front Load';if(/twin tub/.test(SB))return 'Twin Tub';if(/single tub/.test(SB))return 'Single Tub';if(/spinner/.test(SB))return 'Spinner';if(/baby/.test(SB))return 'Baby Washer';if(/TWIN/.test(T))return 'Twin Tub';if(/SINGLE TUB/.test(T))return 'Single Tub';if(/SPINNER|DRYER/.test(T))return 'Spinner';if(/FAWM|FRONT/.test(T))return 'Front Load';if(/TAWM|TOP/.test(T))return 'Top Load'}
+  if(/gas appl/i.test(cat)){if(/built in mwo/.test(SB))return 'Built-in MWO';if(/built in oven/.test(SB))return 'Built-in Oven';if(/hot plate/.test(SB))return 'Hot Plate';if(/cooking range/.test(SB))return 'Cooking Range';if(/hood/.test(SB))return 'Kitchen Hood';if(/hob/.test(SB))return 'Gas Hob';if(/HOOD/.test(T))return 'Kitchen Hood';if(/BUILT\s?-?IN/.test(T))return /MICRO|MWO/.test(T)?'Built-in MWO':'Built-in Oven';if(/COOKING RANGE/.test(T))return 'Cooking Range';if(/HOT PLATE/.test(T))return 'Hot Plate';if(/HOB|STOVE/.test(T))return 'Gas Hob'}
+  return sub||cat;
+}
+function tvInfo(T){
+  const sz=T.match(/(\d{2,3})\s*"/);let size=sz?sz[1]+'"':'';
+  const rest=T.replace(/^.*?\d{2,3}\s*"\s*/,'').replace(/[()]/g,' ').trim();
+  let series='',model='';
+  const nm=rest.match(TV_NAMED);
+  const SKIP=/^(SMART|FHD|HD|4K|2K|LED|TV|UHD|BASIC|GOOGLE|ANDROID|Q|PRO|IN|WITH|SERIES|MINI)$/;
+  const toks=rest.split(/\s+/).filter(Boolean);
+  const tk=toks.find(x=>!SKIP.test(x)&&/\d/.test(x)&&/[A-Z]/.test(x)&&x.length>=3);
+  if(tk)model=tk.replace(/[^A-Z0-9\-\/+]/g,'');
+  if(!size&&model){const z=model.match(/(?:^|-)(\d{2,3})(?=[A-Z])/);if(z&&+z[1]>=19&&+z[1]<=110)size=z[1]+'"'}
+  if(nm)series=nm[1]+(nm[2]?'+':'');
+  else if(model){
+    let t=model.replace(/^(?:CX|TJ|HI|QA|UA|CY|KD|K|V)-?(?=[A-Z]?\d)/,'').replace(/^H(?=\d{2,3}[A-Z])/,'');
+    if(size)t=t.replace(size.replace('"',''),'');
+    const f=t.match(/^[A-Z]{1,4}\d{1,4}/);series=f?f[0]:(t.replace(/[^A-Z0-9]/g,'').slice(0,4)||'');
+    if(!f&&series&&series.length<=2){const nx=toks[toks.indexOf(tk)+1];if(nx&&/^(PRO|MAX|ULTRA|PLUS|LITE)$/.test(nx))series+=' '+nx}
+  }
+  return {type:'LED TV',model,series:series||'Generic TV',size};
+}
+function parseOther(it){
+  const T=String(it.item).toUpperCase(),g=genericInfo(it.brand,it.item),type=typeOther(it.cat,it.sub,T);
+  if(type==='LED TV')return tvInfo(T);
+  let model=g.model,series=g.series,size=g.size;
+  if(/audio/i.test(it.cat)){const ch=T.match(/\b(\d\.\d(?:\.\d)?)\b/);return {type,model,series:(series&&series!=='(no code)')?(series.length>1?series:type+' '+series):type,size:ch?ch[1]+' ch':''}}
+  if(/air conditioner/i.test(it.cat)&&!size){const mt=T.match(/\b(\d\.\d{1,2})\b/);if(mt)size=parseFloat(mt[1])+' Ton'}
+  if(/air conditioner/i.test(it.cat)){
+    let s=acSeries(it.brand,T);
+    if(!s)s=lexMatch(T,AC_SERIES);
+    if(!s){let m;
+      if((m=T.match(/\b\d{2}([A-Z]{2}\d{2})[A-Z]{2}\b/)))s=m[1];
+      else if((m=T.match(/\b\d{2}(T\d PRO)\b/)))s=m[1];
+      else if((m=T.match(/\b[A-Z]{2,5}-?\d{2}([A-Z]{2,4})/)))s=m[1];
+      else if((m=T.match(/\b([A-Z]\d[A-Z]{2,3})\d/)))s=m[1];
+      else if((m=T.match(/\b\d{2}-?([A-Z]{3,4})(?=\d|-|\b)/)))s=m[1];
+      else if((m=T.match(/\b\d{2,3}([A-Z]{3})\b/)))s=m[1];
+      else s=(g.series&&g.series.length>1?g.series:'(no code)')}
+    series=s;
+    if(!model||/^T\d\+?$/.test(model)){const mm=T.match(/\b(\d{2}[A-Z]{2,}[0-9A-Z\-]*)/);model=mm?mm[1]:(/^T\d\+?$/.test(model)?'':model)}
+  }
+  if(series==='(no code)'||!model){const m=T.match(/\b([A-Z]{2,6})[-\s]?(\d{2,}[A-Z0-9\-\/]*)/);
+    if(m&&!/^(TON|LTR|LITER|LITRE|KG|INCH|GAL|HZ|KW|BRN|WATT|WATTS|LTRS|PCS|BTU)$/.test(m[1])){if(series==='(no code)')series=m[1];if(!model)model=m[1]+'-'+m[2]}}
+  if(!size&&/gas appl/i.test(it.cat)){const m=T.match(/(\d)\s*(?:BRN|BURNERS?)\b/);if(m)size=m[1]+' Burner'}
+  if(!size&&/freezer/i.test(it.cat)){const m=T.match(/-\s?(\d{3})\b/);if(m&&+m[1]>=100)size=m[1]+' L'}
+  return {type,model,series,size};
 }
 /* Refrigerator models grouped under one label: brand, series, model and size all become IMPORT/SBS/NF (matched by Item Code) */
 const IMPORT_LABEL='IMPORT/SBS/NF';
@@ -425,16 +541,17 @@ function enrich(it){
   const b=it.brand.toLowerCase();
   let colours=findColours(it.item),model,series,size;
   if(/refrigerator/i.test(it.cat)){
+    it.ptype='Refrigerator';
     [model,size]=fridgeModelSize(b,it.item);series=fridgeSeries(b,it.item,model);
     if(!colours.length&&b==='haier'){const m=it.item.toUpperCase().match(/HRF-\d+\s*([A-Z0-9+]+)/);if(m&&HAIER_CODE[m[1]])colours=[HAIER_CODE[m[1]]]}
-  }else{const g=genericInfo(it.brand,it.item);model=g.model;series=g.series;size=g.size}
+  }else{const g=parseOther(it);model=g.model;series=g.series;size=g.size;it.ptype=g.type}
   it.colours=colours;it.fam=[...new Set(colours.map(famOf))];it.model=model||'';it.series=series||'(no code)';it.size=size||'';
   if(isImport(it)){it.brand=IMPORT_LABEL;it.series=IMPORT_LABEL;it.model=IMPORT_LABEL;it.size=IMPORT_LABEL}
   return it;
 }
 
 /* ---------- data ---------- */
-const state={shareAll:false,shareCat:null,idealGrp:'',idealSel:null,shareBy:'brand',shareMetric:'units',data:null,cat:'',brand:'__all',focus:'__all',dim:'colour',colMode:'exact',rowFilter:'all',thr:{colour:2,series:3,size:2},live:true,wh:false,sel:null};
+const state={sub:'__all',shareAll:false,shareCat:null,ptype:'__all',idealGrp:'',idealSel:null,shareBy:'brand',shareMetric:'units',data:null,cat:'',brand:'__all',focus:'__all',dim:'colour',colMode:'exact',rowFilter:'all',thr:{colour:2,series:3,size:2},live:true,wh:false,sel:null};
 let A=null; // analysis cache
 const isBranch=n=>/^JE-?\d+/i.test(n);
 const isWh=n=>/^(W\d|W-|STORE|GODOWN|WAREHOUSE|HEAD OFFICE|RSV|JES|DMG)/i.test(n);
@@ -457,10 +574,24 @@ function fillSelects(cats){
   const cs=$('#catSel');cs.innerHTML=(cats||[...new Set(d.items.map(i=>i.cat))].sort()).map(c=>`<option value="${esc(c)}">${esc(c)} (${fmt(d.items.filter(i=>i.cat===c).length)})</option>`).join('');
   cs.value=state.cat;fillBrand();
 }
+function fillType(){
+  const d=state.data,ts={};d.items.filter(i=>i.cat===state.cat).forEach(i=>ts[i.ptype||'-']=(ts[i.ptype||'-']||0)+1);
+  const keys=Object.keys(ts).sort((a,b)=>ts[b]-ts[a]);
+  if(state.ptype!=='__all'&&!ts[state.ptype])state.ptype='__all';
+  const sel=$('#typeSel');sel.innerHTML='<option value="__all">All types</option>'+keys.map(k=>`<option value="${esc(k)}">${esc(k)} (${ts[k]})</option>`).join('');
+  sel.value=state.ptype;sel.disabled=keys.length<2;
+}
+function fillSub(){
+  const d=state.data,ss={};d.items.filter(i=>i.cat===state.cat&&(state.ptype==='__all'||i.ptype===state.ptype)).forEach(i=>{const k=i.sub||'-';ss[k]=(ss[k]||0)+1});
+  const keys=Object.keys(ss).sort((a,b)=>ss[b]-ss[a]);
+  if(state.sub!=='__all'&&!ss[state.sub])state.sub='__all';
+  const sel=$('#subSel');sel.innerHTML='<option value="__all">All sub categories</option>'+keys.map(k=>`<option value="${esc(k)}">${esc(k)} (${ss[k]})</option>`).join('');
+  sel.value=state.sub;sel.disabled=keys.length<2;
+}
 function fillBrand(){
   const d=state.data;const bs={};d.items.filter(i=>i.cat===state.cat).forEach(i=>bs[i.brand]=(bs[i.brand]||0)+1);
   const bsel=$('#brandSel');bsel.innerHTML='<option value="__all">All brands</option>'+Object.keys(bs).sort((a,b)=>bs[b]-bs[a]).map(b=>`<option value="${esc(b)}">${esc(b)} (${bs[b]})</option>`).join('');
-  bsel.value=state.brand;fillBranch();
+  bsel.value=state.brand;fillType();fillSub();fillBranch();
 }
 function fillBranch(){
   const cols=allCols();const s=$('#branchSel');
@@ -472,20 +603,22 @@ const allCols=()=>state.data.locs.filter(l=>l.kind==='branch'||(state.wh&&l.kind
 const shownCols=()=>{const c=allCols();return state.focus==='__all'?c:c.filter(x=>x.name===state.focus)};
 
 /* ---------- analysis ---------- */
-function scope(){return state.data.items.filter(i=>i.cat===state.cat&&(state.brand==='__all'||i.brand===state.brand))}
+function scope(){return state.data.items.filter(i=>i.cat===state.cat&&(state.ptype==='__all'||i.ptype===state.ptype)&&(state.sub==='__all'||(i.sub||'-')===state.sub)&&(state.brand==='__all'||i.brand===state.brand))}
 function valuesOf(it,dim){
   if(dim==='colour')return state.colMode==='family'?it.fam:it.colours;
   if(dim==='series')return [it.series];
   return it.size?[it.size]:[];
 }
+let MT=false;
+const gOf=it=>MT?it.brand+' · '+(it.ptype||'-'):it.brand;
 function analyse(dim){
   const cols=allCols(),items=scope(),rows=new Map(),thr=state.thr[dim];
   const jeIdx=state.data.locs.map(l=>l.i);
   for(const it of items){
     const tot=it.stock.reduce((a,b)=>a+(b>0?b:0),0);
     for(const v of valuesOf(it,dim)){
-      const k=it.brand+'\u0001'+v;let r=rows.get(k);
-      if(!r){r={key:k,brand:it.brand,value:v,cells:cols.map(()=>({u:0,skus:[]})),any:0,net:0,skuN:0};rows.set(k,r)}
+      const k=gOf(it)+'\u0001'+v;let r=rows.get(k);
+      if(!r){r={key:k,brand:gOf(it),value:v,cells:cols.map(()=>({u:0,skus:[]})),any:0,net:0,skuN:0};rows.set(k,r)}
       r.skuN++;r.any+=tot;
       cols.forEach((c,ci)=>{const s=it.stock[c.i];if(s>0){r.cells[ci].u+=s;r.cells[ci].skus.push(it);r.net+=s}});
     }
@@ -505,8 +638,8 @@ function exactDoubles(){
     for(const it of items){if(!(it.stock[c.i]>0))continue;
       const col=(state.colMode==='family'?it.fam:it.colours).join(' / ');
       if(!it.size&&!col)continue;
-      const k=[it.brand,it.series,it.size,col].join('\u0001');
-      if(!g.has(k))g.set(k,{branch:c.name,brand:it.brand,series:it.series,size:it.size,colour:col,skus:[],units:0});
+      const k=[gOf(it),it.series,it.size,col].join('\u0001');
+      if(!g.has(k))g.set(k,{branch:c.name,brand:gOf(it),series:it.series,size:it.size,colour:col,skus:[],units:0});
       const x=g.get(k);x.skus.push(it);x.units+=it.stock[c.i];
     }
     g.forEach(x=>{if(x.skus.length>=2)out.push(x)});
@@ -515,6 +648,7 @@ function exactDoubles(){
   return out;
 }
 function recompute(){
+  MT=state.ptype==='__all'&&new Set(state.data.items.filter(i=>i.cat===state.cat).map(i=>i.ptype||'-')).size>1;
   A={colour:analyse('colour'),series:analyse('series'),size:analyse('size')};
   A.exact=exactDoubles();
 }
@@ -572,8 +706,8 @@ function matrixHTML(a){
   const rows=visibleRows(a);a.vis=rows;
   const cols=a.cols.map((c,i)=>({c,i})).filter(x=>state.focus==='__all'||x.c.name===state.focus);
   if(!rows.length)return `<header><h2>${PLURAL[a.dim]} by branch</h2>${legend()}</header><div class="empty">No rows match these filters. Try \"All\" under Show rows.</div>`;
-  const multi=state.brand==='__all';
-  let h=`<header><h2>${PLURAL[a.dim]} by branch · ${fmt(rows.length)} rows</h2>${legend()}</header>${insight(a)}<div class="scroll"><table class="mx"><thead><tr><th class="rl">${multi?'Brand · ':''}${DIMNAME[a.dim]}</th><th class="net">Total</th>`;
+  const multi=state.brand==='__all'||MT;
+  let h=`<header><h2>${PLURAL[a.dim]} by branch · ${fmt(rows.length)} rows</h2>${legend()}</header>${insight(a)}<div class="scroll"><table class="mx"><thead><tr><th class="rl">${multi?(MT?'Brand · Type · ':'Brand · '):''}${DIMNAME[a.dim]}</th><th class="net">Total</th>`;
   for(const {c,i} of cols){const pc=a.perCol[i];h+=`<th data-b="${esc(c.name)}" class="${state.focus===c.name?'focus':''}" title="${esc(c.name)}: ${pc.miss} missing, ${pc.dbl} doubling. Click to focus on this branch">${esc(c.name)}<span class="t">${pc.miss}↓ ${pc.dbl}×</span></th>`}
   h+='</tr></thead><tbody>';
   let lastB=null;
@@ -642,7 +776,7 @@ function renderSel(){
   if(!r){d.innerHTML='<p class="hint">This row is no longer in the current filter.</p>';return}
   const c=r.cells[s.ci],col=a.cols[s.ci];
   const li=(it,u)=>`<li><span>${esc(it.item)}<br><span class="msg">${esc(it.code)}</span></span><span class="n">${u}</span></li>`;
-  const allSk=scope().filter(it=>it.brand===r.brand&&valuesOf(it,s.dim).includes(r.value));
+  const allSk=scope().filter(it=>gOf(it)===r.brand&&valuesOf(it,s.dim).includes(r.value));
   let h=`<div><span class="pill ${c.miss?'miss':c.dbl?'dbl':'ok'}">${c.miss?'Missing':c.dbl?'Doubled ×'+c.skus.length:'In stock'}</span></div>
     <h3>${esc(r.brand)} · ${esc(r.value)}<br><span class="mono" style="font-weight:500;color:var(--muted)">${esc(col.name)} · ${DIMNAME[s.dim]}</span></h3>`;
   if(c.skus.length)h+=`<div><h4>In stock at ${col.name} (${c.skus.length} product${c.skus.length>1?'s':''}, ${fmt(c.u)} units)</h4><ul class="sk">${c.skus.map(it=>li(it,it.stock[col.i])).join('')}</ul></div>`;
@@ -716,8 +850,8 @@ function shareExportRows(){
 
 
 /* ---------- ideal map (optional) ---------- */
-const IG={'AC':['Air Conditioner',s=>!/^FS/i.test(s)],'FLOOR STANDING':['Air Conditioner',s=>/^FS/i.test(s)],'REF':['Refrigerator'],'FREEZERS':['Freezer'],'HOODS':['Gas Appliances',s=>/hood/i.test(s)],'HOBS':['Gas Appliances',s=>/hob/i.test(s)],'BUILT IN':['Gas Appliances',s=>/built in/i.test(s)],'COOKING RANGE':['Gas Appliances',s=>/cooking range/i.test(s)],'LED':['Audio/Video',s=>!/sound|speaker|theatre|dvd|blue|box/i.test(s)],'MICROWAVE':['Microwave Oven'],'A.W.M TOP LOAD':['Washing Machine',s=>/top load/i.test(s)],'A.W.M FRONT LOAD':['Washing Machine',s=>/front load/i.test(s)],'SEMI AUTO':['Washing Machine',s=>/twin|single tub/i.test(s)],'SPINNER':['Washing Machine',s=>/spinner/i.test(s)],'DISH WASHER':['Dish Washer'],'DISPENSER':['Water Dispenser']};
-const AL={ECOSTAR:'ECOSTAR',SUPERASIA:'SUPERASIA',ELECTORLUX:'ELECTROLUX',PELELECTROLUX:'ELECTROLUX',CHOICEFIREXFLAME:'FIREXFLAME',CHOICE:'FIREXFLAME'};
+const IG={'AC':['Air Conditioner',s=>!/^FS/i.test(s)],'FLOOR STANDING':['Air Conditioner',s=>/^FS/i.test(s)],'REF':['Refrigerator'],'FREEZERS':['Freezer'],'HOODS':['Gas Appliances',s=>/hood/i.test(s)],'HOBS':['Gas Appliances',s=>/hob/i.test(s)],'BUILT IN':['Gas Appliances',s=>/built in/i.test(s)],'COOKING RANGE':['Gas Appliances',s=>/cooking range/i.test(s)],'LED':['Audio/Video',(s,i)=>i.ptype==='LED TV'],'MICROWAVE':['Microwave Oven'],'A.W.M TOP LOAD':['Washing Machine',s=>/top load/i.test(s)],'A.W.M FRONT LOAD':['Washing Machine',s=>/front load/i.test(s)],'SEMI AUTO':['Washing Machine',s=>/twin|single tub/i.test(s)],'SPINNER':['Washing Machine',s=>/spinner/i.test(s)],'DISH WASHER':['Dish Washer'],'DISPENSER':['Water Dispenser']};
+const AL={ECOSTAR:'ECOSTAR',SUPERASIA:'SUPERASIA',ELECTORLUX:'ELECTROLUX',PELELECTROLUX:'ELECTROLUX',CHOICEFIREXFLAME:'FIREXFLAME',CHOICE:'FIREXFLAME',HISENSEUNITED:'HISENSE',PELPANASONIC:'PANASONIC'};
 const nb=b=>{const k=String(b).toUpperCase().replace(/^RS-/,'').replace(/[^A-Z0-9]/g,'');return k.startsWith('BEETRO')?'BEETRO':k.startsWith('IMPORT')?'IMPORTSBSNF':(AL[k]||k)};
 const bn=b=>{const k=nb(b);return k==='BEETRO'?'BEETRO':(AL[String(b).toUpperCase().replace(/[^A-Z0-9]/g,'')]||String(b).trim().toUpperCase())};
 let IM=null;
@@ -739,7 +873,7 @@ function parseIdeal(wb){const out={};
 function idealCalc(gk,fb){
   const G=IM&&IM[gk];if(!G||!state.data)return null;
   const [cat,fn]=IG[gk];
-  const items=state.data.items.filter(i=>i.cat.toLowerCase()===cat.toLowerCase()&&(!fn||fn(i.sub)));
+  const items=state.data.items.filter(i=>i.cat.toLowerCase()===cat.toLowerCase()&&(!fn||fn(i.sub,i)));
   const locs=state.data.locs.filter(l=>l.kind==='branch'&&G.rows[l.name.toUpperCase()]&&(fb==='__all'||l.name===fb));
   const other=G.brands.find(b=>/import|^nc|other/i.test(b.label)),keys=new Set(G.brands.map(b=>b.k));
   const bk=i=>{const k=nb(i.brand);return keys.has(k)?k:'__nm|'+String(i.brand).trim().toUpperCase()};
@@ -797,7 +931,22 @@ function idealHTML(){
    h+='</div>'}
   if(state.focus==='__all'){
     h+=`<div class="shsec"><h3>Branch-wise slot compliance (${esc(state.idealGrp)})</h3><div class="tbl"><table class="t"><thead><tr><th>Branch</th><th class="r">Allotted</th><th class="r">Occupied</th><th class="r">Short</th><th class="r">Over</th><th class="r">Occupied %</th><th class="r">Fill rate</th><th>Status</th></tr></thead><tbody>${C.per.map(x=>{const L=idealCalc(state.idealGrp,x.name),s=istats(L.list);return {x,s}}).sort((a,b)=>a.s.fill-b.s.fill).map(({x,s})=>`<tr><td class="mono"><b>${esc(x.name)}</b></td><td class="r mono">${s.ti}</td><td class="r mono">${s.ta}</td><td class="r mono" style="color:var(--miss)">${s.sh}</td><td class="r mono" style="color:var(--dbl)">${s.ex}</td><td class="r mono">${s.ti?Math.round(s.ta/s.ti*1000)/10+'%':'-'}</td><td class="r mono">${s.fill}%</td><td>${pillD(s.ta-s.ti,s.ti)}</td></tr>`).join('')}</tbody></table></div></div>`}
+  h+=shareSummaryHTML();
   return h;
+}
+
+function groupShareRows(fb){const out=[];for(const g of Object.keys(IM)){const C=idealCalc(g,fb);if(!C||!C.locs.length)continue;out.push({g,cat:IG[g][0],S:istats(C.list),list:C.list})}return out}
+function shareSummaryHTML(){
+  const G=groupShareRows(state.focus);if(!G.length)return '';
+  const f1=x=>(Math.round(x*10)/10).toString();
+  let h=`<div class="shsec"><h3>Category-wise share: allotted vs occupied · ${state.focus==='__all'?'all branches':esc(state.focus)}</h3><p class="hint" style="margin:0 0 8px">Allotted share is the brand's part of the dedicated slots in that category. Occupied share is the brand's part of the products actually in stock. Gap is occupied share minus allotted share, in percentage points. Occupied % of allotted shows how much of the dedicated slots are really filled.</p><div class="tbl"><table class="t"><thead><tr><th>Category / Brand</th><th class="r">Allotted</th><th class="r">Allotted share</th><th class="r">Occupied</th><th class="r">Occupied share</th><th class="r">Gap (pp)</th><th class="r">Occupied % of allotted</th></tr></thead><tbody>`;
+  G.forEach(({g,cat,S,list})=>{
+    const occ=S.ti?Math.round(S.ta/S.ti*1000)/10:0;
+    h+=`<tr class="tot"><td><b>${esc(g)}</b> <span class="msg">(${esc(cat)})</span></td><td class="r mono"><b>${fmt(S.ti)}</b></td><td class="r mono">100%</td><td class="r mono"><b>${fmt(S.ta)}</b></td><td class="r mono">100%</td><td class="r mono">-</td><td class="r mono"><b>${occ}%</b></td></tr>`;
+    list.forEach(r=>{const a=S.ti?r.ideal/S.ti*100:0,o=S.ta?r.act/S.ta*100:0,gap=o-a;
+      h+=`<tr><td>&nbsp;&nbsp;${esc(r.label)}${r.nm?' <span class="pill new">Not in ideal map</span>':''}</td><td class="r mono">${r.ideal}</td><td class="r mono">${f1(a)}%</td><td class="r mono">${r.act}</td><td class="r mono">${f1(o)}%</td><td class="r mono" style="color:${Math.abs(gap)<1?'var(--ok)':gap>0?'var(--dbl)':'var(--miss)'}">${gap>0?'+':''}${f1(gap)}</td><td class="r mono">${r.ideal?Math.round(r.act/r.ideal*100)+'%':'-'}</td></tr>`});
+  });
+  return h+'</tbody></table></div></div>';
 }
 async function loadIdeal(f){
   try{
@@ -821,7 +970,7 @@ function buildWorkbook(){
   const miss=[['Branch','Brand','Dimension','Value','Network units (branches)','Available at (top holders)']],dbl=[['Branch','Brand','Dimension','Value','Product count','Units','Products']];
   for(const dim of ['colour','series','size']){const a=A[dim];
     a.rows.forEach(r=>r.cells.forEach((c,ci)=>{
-      if(c.miss){const av=scope().filter(it=>it.brand===r.brand&&valuesOf(it,dim).includes(r.value)&&it.stock.some(v=>v>0));
+      if(c.miss){const av=scope().filter(it=>gOf(it)===r.brand&&valuesOf(it,dim).includes(r.value)&&it.stock.some(v=>v>0));
         const top=[];av.forEach(it=>state.data.locs.forEach(l=>{if(it.stock[l.i]>0)top.push([l.name,it.stock[l.i]])}));
         const m={};top.forEach(([n,u])=>m[n]=(m[n]||0)+u);
         miss.push([names[ci],r.brand,DIMNAME[dim],r.value,r.net,Object.entries(m).sort((x,y)=>y[1]-x[1]).slice(0,5).map(x=>x[0]+' '+x[1]).join(', ')])}
@@ -886,11 +1035,17 @@ async function buildIdealReport(){
   /* Group Summary */
   const all=allIdeal(),grp=Object.keys(IM).map(g=>{const rs=all.filter(x=>x.g===g),s=istats(rs);return {k:kind(s.ta-s.ti),v:[g,IG[g][0],s.ti,s.ta,s.ta-s.ti,s.sh,s.ex,s.ti?s.fill/100:null,s.ti?s.ta/s.ti:null]}});
   sheet('Group Summary','Group summary: all branches','Each ideal map group totalled across all branches','Group,Category,Allotted slots,Occupied slots,Variance,Short (empty) slots,Over (extra) slots,Fill rate,Occupied %'.split(','),grp,[18,24,14,14,12,16,16,12,12],{textCols:2,fmt:{4:vf,7:pf,8:pf},stCols:[4]});
+  /* Share Summary: allotted share vs occupied share, category by category */
+  {const rowsS=[];for(const x of groupShareRows('__all')){const S=x.S,occ=S.ti?S.ta/S.ti:null;
+     rowsS.push({k:kind(S.ta-S.ti),v:[x.g,x.cat,'ALL BRANDS',S.ti,1,S.ta,1,null,occ,'Total occupied '+(S.ti?Math.round(S.ta/S.ti*1000)/10:0)+'%']});
+     x.list.forEach(r=>{const a=S.ti?r.ideal/S.ti:0,o=S.ta?r.act/S.ta:0;rowsS.push({k:kind(r.diff,r.nm),v:[x.g,x.cat,r.label,r.ideal,a,r.act,o,(o-a)*100,r.ideal?r.act/r.ideal:null,stTxt(r.diff,r.ideal,r.nm)]})})}
+   sheet('Share Summary','Share summary: dedicated slots vs actual stock','For every category group (all branches together): the brand share of allotted slots against its share of occupied slots. Gap is in percentage points (occupied share minus allotted share).','Group,Category,Brand,Allotted slots,Allotted share,Occupied slots,Occupied share,Gap (pp),Occupied % of allotted,Status'.split(','),rowsS,[18,22,22,13,13,13,13,11,16,34],{textCols:3,fmt:{4:pf,6:pf,7:'+0.0;-0.0;0.0',8:pf},stCols:[9]})}
   /* Branch Summary */
   const br=[];for(const g of Object.keys(IM))for(const l of state.data.locs.filter(l=>l.kind==='branch')){const rs=all.filter(x=>x.g===g&&x.b===l.name);if(!rs.length)continue;const s=istats(rs);br.push({k:kind(s.ta-s.ti),v:[g,l.name,s.ti,s.ta,s.ta-s.ti,s.sh,s.ex,s.ti?s.fill/100:null,s.ti?s.ta/s.ti:null,stTxt(s.ta-s.ti,s.ti)]})}
   sheet('Branch Summary','Branch summary','Every group and branch, with empty (short) and extra (over) slots','Group,Branch,Allotted slots,Occupied slots,Variance,Short (empty) slots,Over (extra) slots,Fill rate,Occupied %,Status'.split(','),br,[18,12,14,14,12,16,16,12,12,24],{textCols:2,fmt:{4:vf,7:pf,8:pf},stCols:[4,9]});
+  const tt={};all.forEach(x=>{const t=tt[x.g+'|'+x.b]||(tt[x.g+'|'+x.b]={ti:0,ta:0});t.ti+=x.ideal;t.ta+=x.act});
   /* Brand Detail */
-  sheet('Brand Detail','Brand detail','Every group, branch and brand: allotted vs occupied slots','Group,Category,Branch,Brand,Allotted slots,Occupied slots,Variance,Fill rate,Status'.split(','),all.map(x=>({k:kind(x.diff,x.nm),v:[x.g,x.cat,x.b,x.label,x.ideal,x.act,x.diff,x.ideal?x.act/x.ideal:null,stTxt(x.diff,x.ideal,x.nm)]})),[18,24,12,24,14,14,12,12,24],{textCols:4,fmt:{6:vf,7:pf},stCols:[6,8]});
+  sheet('Brand Detail','Brand detail','Every group, branch and brand: allotted vs occupied slots','Group,Category,Branch,Brand,Allotted slots,Occupied slots,Variance,Fill rate,Status,Allotted share,Occupied share'.split(','),all.map(x=>({k:kind(x.diff,x.nm),v:[x.g,x.cat,x.b,x.label,x.ideal,x.act,x.diff,x.ideal?x.act/x.ideal:null,stTxt(x.diff,x.ideal,x.nm),tt[x.g+'|'+x.b].ti?x.ideal/tt[x.g+'|'+x.b].ti:0,tt[x.g+'|'+x.b].ta?x.act/tt[x.g+'|'+x.b].ta:0]})),[18,24,12,24,14,14,12,12,24,13,13],{textCols:4,fmt:{6:vf,7:pf,9:pf,10:pf},stCols:[6,8]});
   {const rowsM=[];for(const g of Object.keys(IM))for(const l of state.data.locs.filter(l=>l.kind==='branch')){const Cx=idealCalc(g,l.name);if(!Cx||!Cx.locs.length)continue;const lab={};Cx.list.forEach(r=>lab[r.k]={l:r.label,nm:r.nm});
     Cx.items.filter(it=>it.stock[l.i]>0).forEach(it=>{const b=lab[Cx.bk(it)]||{l:it.brand,nm:true};rowsM.push({k:b.nm?'new':null,v:[g,l.name,b.l,b.nm?'Not in ideal map':'In ideal map',it.code,it.item,it.stock[l.i]]})})}
    sheet('Models in Stock','Models in stock by brand','Every model in stock at each branch, grouped by ideal-map group and brand. Blue rows belong to brands that are not in the ideal map.','Group,Branch,Brand,Ideal map,Item code,Item,Units'.split(','),rowsM,[18,12,24,18,14,60,10],{textCols:6,stCols:[3]})}
@@ -957,8 +1112,10 @@ function on(){
   ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over')}));
   ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over')}));
   dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
-  $('#catSel').addEventListener('change',e=>{state.cat=e.target.value;state.shareCat=null;state.brand='__all';state.sel=null;fillBrand();render()});
+  $('#catSel').addEventListener('change',e=>{state.cat=e.target.value;state.ptype='__all';state.sub='__all';state.shareCat=null;state.brand='__all';state.sel=null;fillBrand();render()});
   $('#brandSel').addEventListener('change',e=>{state.brand=e.target.value;state.sel=null;render()});
+  $('#typeSel').addEventListener('change',e=>{state.ptype=e.target.value;state.sel=null;fillSub();render()});
+  $('#subSel').addEventListener('change',e=>{state.sub=e.target.value;state.sel=null;render()});
   $('#branchSel').addEventListener('change',e=>{state.focus=e.target.value;render()});
   $('#thr').addEventListener('change',e=>{const v=Math.max(2,Math.min(20,parseInt(e.target.value)||2));e.target.value=v;
     const d=['colour','series','size'].includes(state.dim)?state.dim:'colour';state.thr[d]=v;state.sel=null;render()});
