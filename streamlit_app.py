@@ -70,7 +70,7 @@ st.markdown(
     <section class="launch-card">
       <div class="launch-mark">BG</div>
       <h1>Branch Gap Radar Pro</h1>
-      <p>Open the full dashboard to review colour, series and size gaps, compare ideal vs actual slots, analyse share and download the professional multi-sheet report.</p>
+      <p>Upload current stock, sales and purchase registers to plan branch-to-branch stock movement, identify slow stock, generate quantity-only local POs, rank salesmen, and review colour, series and size gaps.</p>
     </section>
     """,
     unsafe_allow_html=True,

@@ -1,4 +1,4 @@
-<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html><html data-theme="light"><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
 <title>Branch Gap Radar</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -191,6 +191,32 @@ details.more summary{padding:7px 0}
 .morebox .check{padding-bottom:0}
 .insight{padding:10px 14px;border-bottom:1px solid var(--line);background:var(--accent-soft);font-size:13px}
 @media (max-width:640px){details.more{margin-left:0}.morebox{position:static;box-shadow:none;margin-bottom:8px}}
+.data-status{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.chip.ready{background:var(--ok-bg);color:var(--ok);border-color:var(--ok)}
+.chip.wait{background:var(--surface2);color:var(--muted)}
+.plan-tools{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;padding:12px 14px;border-bottom:1px solid var(--line);background:var(--surface2)}
+.plan-note{padding:10px 14px;border-bottom:1px solid var(--line);font-size:12.5px;color:var(--muted)}
+.plan-note b{color:var(--ink)}
+.status{display:inline-flex;align-items:center;border-radius:999px;padding:2px 8px;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+.status.slow{background:var(--dbl-bg);color:var(--dbl)}
+.status.critical{background:var(--miss-bg);color:var(--miss)}
+.status.move{background:var(--accent-soft);color:var(--accent)}
+.reason{max-width:420px;color:var(--muted);font-size:12px}
+.v7summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+.v7card{border:1px solid var(--line);background:var(--surface2);border-radius:7px;padding:9px 11px}
+.v7card b{display:block;font-family:var(--mono);font-size:20px}.v7card span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.rank{display:grid;gap:8px;padding:14px}
+.rankrow{display:grid;grid-template-columns:34px minmax(130px,220px) 1fr 86px;gap:10px;align-items:center}
+.rankrow .pos{font-family:var(--mono);font-weight:700;color:var(--muted)}
+.rankbar{height:12px;background:var(--surface2);border:1px solid var(--line);border-radius:999px;overflow:hidden}.rankbar i{display:block;height:100%;background:linear-gradient(90deg,var(--accent),#52a4d8)}
+.history{margin:14px;border:1px solid var(--line);border-radius:8px;overflow:hidden}.history h3{font-size:13px;margin:0;padding:10px 12px;background:var(--surface2);border-bottom:1px solid var(--line)}
+.po-actions{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+dialog.po{width:min(1060px,94vw);max-height:88vh;border:1px solid var(--line2);border-radius:10px;background:var(--surface);color:var(--ink);padding:0;box-shadow:0 20px 70px rgba(19,32,47,.28)}
+dialog.po::backdrop{background:rgba(19,32,47,.38);backdrop-filter:blur(2px)}
+.pomodal-head{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--line)}.pomodal-head h2{font-size:16px;margin:0}
+.pomodal-body{padding:14px 16px;overflow:auto;max-height:72vh}.pomodal-foot{display:flex;justify-content:flex-end;gap:8px;padding:12px 16px;border-top:1px solid var(--line)}
+.xbtn{border:0;background:transparent;font-size:22px;cursor:pointer;color:var(--muted)}
+@media(max-width:760px){.rankrow{grid-template-columns:28px 1fr 70px}.rankbar{grid-column:2/4}.reason{max-width:260px}}
 </style>
 
 <div class="wrap">
@@ -198,6 +224,8 @@ details.more summary{padding:7px 0}
     <div class="brandmark"><h1>Branch Gap Radar</h1><span class="sub">See which colours, series and sizes each branch is missing or has doubled</span></div>
     <div class="actions">
       <label class="btn primary" for="fileIn">Upload stock file</label>
+      <label class="btn" for="salesIn">Upload sales</label><input id="salesIn" type="file" accept=".xlsx,.xlsm,.xls" hidden>
+      <label class="btn" for="purchaseIn">Upload purchases</label><input id="purchaseIn" type="file" accept=".xlsx,.xlsm,.xls" hidden>
       <label class="btn" for="idealIn">Upload ideal map (optional)</label><input id="idealIn" type="file" accept=".xlsx,.xlsm,.xls" hidden>
       <input id="fileIn" type="file" accept=".xlsx,.xlsm,.xls,.csv" hidden>
       <button class="btn" id="exportBtn" type="button">Export summary (.xlsx)</button>
@@ -206,7 +234,7 @@ details.more summary{padding:7px 0}
   </div>
 
   <div class="drop" id="drop">
-    <div class="file"><b id="fileName">No file loaded</b><span class="chip" id="fileMeta"></span><span class="chip" id="idealMeta" hidden></span><span class="chip" id="sheetWrap" hidden>Sheet: <select id="sheetSel" style="min-width:0;padding:2px 6px"></select></span></div>
+    <div class="file"><b id="fileName">No stock file loaded</b><span class="chip" id="fileMeta"></span><span class="chip wait" id="salesMeta">Sales required for planning</span><span class="chip wait" id="purchaseMeta">Purchases optional</span><span class="chip" id="idealMeta" hidden></span><span class="chip" id="sheetWrap" hidden>Sheet: <select id="sheetSel" style="min-width:0;padding:2px 6px"></select></span></div>
     <div class="msg" id="loadMsg">Drop your stock file (Excel) here or use the Upload button. The dashboard appears only after a file is loaded. The Ideal map file is optional. Files are read in your browser only.</div>
   </div>
 
@@ -252,6 +280,14 @@ details.more summary{padding:7px 0}
     <aside class="panel detail" id="detail"><header><h2>Details</h2></header><div class="body"><p class="hint">Click any cell in the matrix to see the products behind it. For a missing cell you will also see where that item is available.</p></div></aside>
   </div>
 </div></div>
+<dialog class="po" id="poDialog">
+  <div class="pomodal-head"><div><h2>Local Purchase Order</h2><div class="msg">Quantity planning only · no prices, values, GRN or source PO numbers</div></div><button class="xbtn" id="poClose" type="button" aria-label="Close">×</button></div>
+  <div class="pomodal-body">
+    <div class="plan-tools"><div class="field"><label for="poCat">Category</label><select id="poCat"></select></div><button class="btn primary" id="poBuild" type="button">Generate PO</button></div>
+    <div id="poPreview" class="empty">Select a category and click Generate PO.</div>
+  </div>
+  <div class="pomodal-foot"><button class="btn" id="poCancel" type="button">Close</button><button class="btn primary" id="poDownload" type="button" disabled>Download local PO (.xlsx)</button></div>
+</dialog>
 <style>.pbar{position:relative;display:block;width:220px;height:12px;background:var(--line);border-radius:6px}.pbar i{display:block;height:100%;border-radius:6px}.pbar b{position:absolute;left:50%;top:-3px;bottom:-3px;width:2px;background:var(--ink)}.idef{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px 22px;padding:12px 14px;font-size:13px;color:var(--muted);border-bottom:1px solid var(--line)}.idef b{color:var(--ink)}.sw2{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-2px;margin-right:6px}.ir{cursor:pointer}.ir:hover td{background:var(--accent-soft)}.ig select{min-width:0}</style>
 <div class="toast" id="toast" hidden></div>
 
@@ -551,8 +587,9 @@ function enrich(it){
 }
 
 /* ---------- data ---------- */
-const state={sub:'__all',shareAll:false,shareCat:null,ptype:'__all',idealGrp:'',idealSel:null,shareBy:'brand',shareMetric:'units',data:null,cat:'',brand:'__all',focus:'__all',dim:'colour',colMode:'exact',rowFilter:'all',thr:{colour:2,series:3,size:2},live:true,wh:false,sel:null};
+const state={sub:'__all',shareAll:false,shareCat:null,ptype:'__all',idealGrp:'',idealSel:null,shareBy:'brand',shareMetric:'units',data:null,cat:'',brand:'__all',focus:'__all',dim:'colour',colMode:'exact',rowFilter:'all',thr:{colour:2,series:3,size:2},live:true,wh:false,sel:null,coverage:30,planItem:null,salesmanItem:'__all'};
 let A=null; // analysis cache
+let SD=null,PD=null,PLAN=null,LOCAL_PO=[];
 const isBranch=n=>/^JE-?\d+/i.test(n);
 const isWh=n=>/^(W\d|W-|STORE|GODOWN|WAREHOUSE|HEAD OFFICE|RSV|JES|DMG)/i.test(n);
 function setData(d){
@@ -567,7 +604,7 @@ function setData(d){
   $('#fileName').textContent=d.file;
   const nb=d.locs.filter(l=>l.kind==='branch').length;
   $('#fileMeta').textContent=fmt(d.items.length)+' items · '+nb+' branches · '+cats.length+' categories';
-  fillSelects(cats);render();
+  fillSelects(cats);buildPlan();render();
 }
 function fillSelects(cats){
   const d=state.data;
@@ -661,6 +698,18 @@ function render(){
   recompute();renderKpis();renderTabs();renderView();
 }
 function renderKpis(){
+  if(['movement','slow','po','salesmen'].includes(state.dim)){
+    const it=(k,v,d,c)=>`<div class="kpi ${c||''}"><span class="k">${k}</span><span class="v">${v}</span><span class="d">${d}</span></div>`;
+    if(!SD){$('#kpis').innerHTML=it('Planning status','Waiting','Upload sales data to activate movement, slow-stock, PO and salesman analysis');return}
+    const m=planRows(PLAN&&PLAN.moves||[]),s=planRows(PLAN&&PLAN.slow||[]),p=planRows(PLAN&&PLAN.po||[]),crit=s.filter(x=>x.status==='Critical');
+    const req=p.reduce((a,x)=>a+x.qty,0),move=m.reduce((a,x)=>a+x.qty,0),poItems=new Set(p.map(x=>x.code)).size;
+    $('#kpis').innerHTML=it('Transfer suggestions',fmt(m.length),fmt(move)+' units can be rebalanced','ok')+
+      it('Slow-moving',fmt(s.length),fmt(crit.length)+' critical items','dbl')+
+      it('PO-required items',fmt(poItems),fmt(req)+' units · '+fmt(p.length)+' branch needs','miss')+
+      it('Planning cover',state.coverage+' days','Demand uses latest 60-day sales run rate')+
+      it('As of',PLAN?dateLabel(PLAN.asOf):'-','Latest uploaded transaction date');
+    return;
+  }
   const t=['colour','series','size'].includes(state.dim)?state.dim:'colour',a=A[t],ci=state.focus==='__all'?null:a.cols.findIndex(c=>c.name===state.focus);
   const cells=a.rows.length*(ci===null?a.cols.length:1);
   const miss=ci===null?a.miss:a.perCol[ci].miss,dbl=ci===null?a.dbl:a.perCol[ci].dbl;
@@ -679,7 +728,10 @@ function renderTabs(){
   const mk=(id,label,b)=>`<button class="tab" role="tab" data-t="${id}" aria-selected="${state.dim===id}">${label}${b||''}</button>`;
   const bd=a=>`<span class="b m" title="Missing cells">${fmt(a.miss)}</span><span class="b d" title="Doubled cells">${fmt(a.dbl)}</span>`;
   $('#tabs').innerHTML=mk('colour','Colours',bd(A.colour))+mk('series','Series',bd(A.series))+mk('size','Sizes',bd(A.size))+
-    mk('exact','Exact duplicates',`<span class="b d">${fmt(A.exact.length)}</span>`)+mk('share','Share','')+mk('ideal','Ideal vs Actual (slots)','')+mk('branches','Branch ranking','');
+    mk('exact','Exact duplicates',`<span class="b d">${fmt(A.exact.length)}</span>`)+mk('share','Share','')+mk('ideal','Ideal vs Actual (slots)','')+mk('branches','Branch ranking','')+
+    mk('movement','Stock movement',PLAN?`<span class="b m">${fmt(planRows(PLAN.moves).length)}</span>`:'')+
+    mk('slow','Slow stock',PLAN?`<span class="b d">${fmt(planRows(PLAN.slow).length)}</span>`:'')+
+    mk('po','Required PO',PLAN?`<span class="b m">${fmt(new Set(planRows(PLAN.po).map(x=>x.code)).size)}</span>`:'')+mk('salesmen','Salesman ranking','');
 }
 function renderView(){
   const t=state.dim,p=$('#viewPanel');
@@ -691,6 +743,10 @@ function renderView(){
   else if(t==='share')p.innerHTML=shareHTML();
   else if(t==='ideal')p.innerHTML=idealHTML();
   else if(t==='branches')p.innerHTML=scoreHTML();
+  else if(t==='movement')p.innerHTML=movementHTML();
+  else if(t==='slow')p.innerHTML=slowHTML();
+  else if(t==='po')p.innerHTML=poHTML();
+  else if(t==='salesmen')p.innerHTML=salesmenHTML();
   else{p.innerHTML=matrixHTML(A[t]);renderSel()}
 }
 function legend(){return `<div class="legend"><span class="lg"><i class="sw miss"></i>Missing (no stock)</span><span class="lg"><i class="sw dbl"></i>Doubled (${state.thr[state.dim]||2}+ products)</span><span class="lg"><i class="sw ok"></i>In stock</span></div>`}
@@ -1064,6 +1120,126 @@ async function doIdealExport(){
     await saveBytes(new Uint8Array(buf),'Ideal_vs_Actual_Slot_Report.xlsx')}catch(e){toast('Report failed: '+(e&&e.message||e))}
 }
 
+/* ---------- purchasing, movement and sales intelligence (v7) ---------- */
+const DAY=86400000;
+const normCode=v=>String(v==null?'':v).trim().toUpperCase();
+const normHead=v=>String(v==null?'':v).trim().toLowerCase().replace(/\s+/g,' ');
+const dateLabel=v=>v?new Date(v).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}):'-';
+const daysBetween=(a,b)=>Math.max(0,Math.floor((a-b)/DAY));
+function excelDate(v){
+  if(v instanceof Date)return Date.UTC(v.getFullYear(),v.getMonth(),v.getDate());
+  if(typeof v==='number'&&isFinite(v)){const d=new Date(Date.UTC(1899,11,30)+Math.round(v*DAY));return Date.UTC(d.getUTCFullYear(),d.getUTCMonth(),d.getUTCDate())}
+  const d=new Date(v);return isNaN(d)?0:Date.UTC(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function findSheet(wb,required){
+  for(const name of wb.SheetNames){const grid=XLSX.utils.sheet_to_json(wb.Sheets[name],{header:1,defval:'',raw:true});
+    for(let i=0;i<Math.min(20,grid.length);i++){const h=(grid[i]||[]).map(normHead);if(required.every(x=>h.includes(x)))return {name,grid,hi:i,head:h}}
+  }return null;
+}
+function stockBranchName(raw){
+  if(!state.data)return String(raw||'').trim();
+  const s=String(raw||'').trim(),m=s.match(/^JE-?0*(\d+)/i);
+  if(m){const n=+m[1],hit=state.data.locs.find(l=>l.kind==='branch'&&(()=>{const x=l.name.match(/^JE-?0*(\d+)/i);return x&&+x[1]===n})());if(hit)return hit.name}
+  const hit=state.data.locs.find(l=>l.name.toLowerCase()===s.toLowerCase());return hit?hit.name:s;
+}
+async function loadSales(f){
+  $('#salesMeta').className='chip wait';$('#salesMeta').textContent='Reading sales…';await new Promise(r=>setTimeout(r,25));
+  try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}),sh=findSheet(wb,['sale date','item code','quantity','branch','salesman']);if(!sh)throw new Error('Sales columns not found. Required: Sale Date, Item Code, Quantity, Branch and Salesman.');
+    const ix=n=>sh.head.indexOf(n),di=ix('sale date'),ci=ix('item code'),ii=ix('item'),bi=ix('branch'),qi=ix('quantity'),si=ix('salesman'),ni=ix('invoice no'),bri=ix('manufacturer'),cai=ix('category'),sui=ix('sub category');
+    const byCode=new Map(),branches=new Set();let latest=0,earliest=Infinity,rows=0;
+    for(let r=sh.hi+1;r<sh.grid.length;r++){const g=sh.grid[r],code=normCode(g[ci]),date=excelDate(g[di]),qty=Number(g[qi])||0;if(!code||!date)continue;
+      const branch=String(g[bi]||'').trim()||'(no branch)',salesman=String(g[si]||'').trim()||'(not assigned)',inv=String(ni>=0?g[ni]:'').trim();branches.add(branch);latest=Math.max(latest,date);earliest=Math.min(earliest,date);rows++;
+      let x=byCode.get(code);if(!x){x={code,item:String(ii>=0?g[ii]:'').trim(),brand:String(bri>=0?g[bri]:'').trim(),cat:String(cai>=0?g[cai]:'').trim(),sub:String(sui>=0?g[sui]:'').trim(),first:date,last:0,total:0,history:new Map(),byBranch:new Map(),salesmen:new Map()};byCode.set(code,x)}
+      x.first=Math.min(x.first,date);if(qty>0)x.last=Math.max(x.last,date);x.total+=qty;
+      const hk=date+'|'+branch,he=x.history.get(hk)||{date,branch,qty:0};he.qty+=qty;x.history.set(hk,he);
+      const be=x.byBranch.get(branch)||{qty:0,last:0};be.qty+=qty;if(qty>0)be.last=Math.max(be.last,date);x.byBranch.set(branch,be);
+      let se=x.salesmen.get(salesman);if(!se){se={qty:0,invoices:new Set(),branches:new Map()};x.salesmen.set(salesman,se)}se.qty+=qty;if(inv)se.invoices.add(inv);
+      let sb=se.branches.get(branch);if(!sb){sb={qty:0,invoices:new Set()};se.branches.set(branch,sb)}sb.qty+=qty;if(inv)sb.invoices.add(inv);
+    }
+    if(!rows)throw new Error('No valid sales rows found.');SD={file:f.name,rows,byCode,branches,latest,earliest};$('#salesMeta').className='chip ready';$('#salesMeta').textContent=fmt(rows)+' sales rows · '+dateLabel(latest);buildPlan();if(state.data)render();
+  }catch(e){SD=null;PLAN=null;$('#salesMeta').className='chip wait';$('#salesMeta').textContent='Sales error';toast(e.message||String(e))}
+}
+async function loadPurchases(f){
+  $('#purchaseMeta').className='chip wait';$('#purchaseMeta').textContent='Reading purchases…';await new Promise(r=>setTimeout(r,25));
+  try{const wb=XLSX.read(await f.arrayBuffer(),{type:'array'}),sh=findSheet(wb,['grn date','item code','quantity','location']);if(!sh)throw new Error('Purchase columns not found. Required: GRN Date, Item Code, Quantity and Location.');
+    const ix=n=>sh.head.indexOf(n),di=ix('grn date'),ci=ix('item code'),ii=ix('item'),li=ix('location'),qi=ix('quantity'),bri=ix('brand'),cai=ix('category'),sui=ix('sub category');
+    const byCode=new Map();let latest=0,earliest=Infinity,rows=0;
+    for(let r=sh.hi+1;r<sh.grid.length;r++){const g=sh.grid[r],code=normCode(g[ci]),date=excelDate(g[di]),qty=Number(g[qi])||0;if(!code||!date)continue;latest=Math.max(latest,date);earliest=Math.min(earliest,date);rows++;
+      let x=byCode.get(code);if(!x){x={code,item:String(ii>=0?g[ii]:'').trim(),brand:String(bri>=0?g[bri]:'').trim(),cat:String(cai>=0?g[cai]:'').trim(),sub:String(sui>=0?g[sui]:'').trim(),first:date,last:date,qty:0,events:new Map()};byCode.set(code,x)}
+      x.first=Math.min(x.first,date);x.last=Math.max(x.last,date);x.qty+=qty;const loc=String(g[li]||'').trim()||'(no location)',k=date+'|'+loc,ev=x.events.get(k)||{date,location:loc,qty:0};ev.qty+=qty;x.events.set(k,ev);
+    }
+    if(!rows)throw new Error('No valid purchase rows found.');PD={file:f.name,rows,byCode,latest,earliest};$('#purchaseMeta').className='chip ready';$('#purchaseMeta').textContent=fmt(rows)+' purchase rows · '+dateLabel(latest);buildPlan();if(state.data)render();
+  }catch(e){PD=null;$('#purchaseMeta').className='chip wait';$('#purchaseMeta').textContent='Purchase error';toast(e.message||String(e))}
+}
+function branchDemand(rec,asOf){
+  const out=new Map(),span=Math.min(60,Math.max(1,daysBetween(asOf,SD.earliest)+1)),cut=asOf-(span-1)*DAY;
+  if(rec)rec.history.forEach(h=>{if(h.date>=cut&&h.date<=asOf){const b=stockBranchName(h.branch);out.set(b,(out.get(b)||0)+h.qty)}});
+  out.forEach((v,k)=>out.set(k,Math.max(0,v)*30/span));return out;
+}
+function buildPlan(){
+  if(!state.data||!SD){PLAN=null;return}
+  const asOf=Math.max(SD.latest,PD&&PD.latest||0),moves=[],po=[],slow=[];
+  const locs=state.data.locs,branches=locs.filter(l=>l.kind==='branch');
+  for(const it of state.data.items){const code=normCode(it.code);if(!code)continue;const sr=SD.byCode.get(code),pr=PD&&PD.byCode.get(code),dem=branchDemand(sr,asOf),targets=new Map();
+    branches.forEach(l=>{const monthly=dem.get(l.name)||0,stock=Math.max(0,Number(it.stock[l.i])||0),target=monthly>=1?Math.max(1,Math.ceil(monthly*state.coverage/30)):0;targets.set(l.name,{monthly,stock,target})});
+    const needs=[];targets.forEach((v,name)=>{if(v.monthly>=1&&v.stock<v.target)needs.push({name,need:v.target-v.stock,...v})});needs.sort((a,b)=>b.need-a.need||b.monthly-a.monthly);
+    const sources=[];locs.forEach(l=>{const stock=Math.max(0,Number(it.stock[l.i])||0),t=l.kind==='branch'?(targets.get(l.name)||{target:0,monthly:0}):{target:0,monthly:0},excess=Math.max(0,stock-t.target);if(excess>0)sources.push({name:l.name,kind:l.kind,stock,target:t.target,monthly:t.monthly,excess})});
+    sources.sort((a,b)=>(a.kind==='wh'?0:1)-(b.kind==='wh'?0:1)||b.excess-a.excess);
+    for(const n of needs){let remain=n.need;for(const s of sources){if(remain<=0)break;if(s.excess<=0||s.name===n.name)continue;const q=Math.min(remain,s.excess);moves.push({code,item:it.item,brand:it.brand,cat:it.cat,sub:it.sub||'',source:s.name,target:n.name,qty:q,monthly:n.monthly,targetStock:n.target,targetCurrent:n.stock,sourceStock:s.stock,sourceMonthly:s.monthly,sourceKind:s.kind,reason:`${n.name} sells ${n.monthly.toFixed(1)} units/month and has ${n.stock}; ${s.name} has ${s.stock} with ${s.monthly.toFixed(1)} monthly demand.`});s.excess-=q;remain-=q}
+      if(remain>0)po.push({code,item:it.item,brand:it.brand,cat:it.cat,sub:it.sub||'',target:n.name,qty:remain,monthly:n.monthly,current:n.stock,targetStock:n.target,reason:`${n.name} needs ${n.target} units for ${state.coverage}-day cover; only ${n.stock} in stock and internal excess cannot cover ${remain}.`});
+    }
+    const total=locs.reduce((a,l)=>a+Math.max(0,Number(it.stock[l.i])||0),0);if(total>0){const base=sr&&sr.last||pr&&pr.first||SD.earliest,days=daysBetween(asOf,base);if(days>=40){const ev=pr?[...pr.events.values()]:[],after=ev.filter(e=>e.date>(sr&&sr.last||0)).length,extra=after>=2,status=days>=60||extra?'Critical':'Slow';
+        let top='No sale in uploaded period',topQty=0;if(sr)sr.byBranch.forEach((v,b)=>{if(v.qty>topQty){topQty=v.qty;top=stockBranchName(b)}});
+        slow.push({code,item:it.item,brand:it.brand,cat:it.cat,sub:it.sub||'',stock:total,days,status,lastSale:sr&&sr.last||0,lastPurchase:pr&&pr.last||0,receipts:ev.length,topBranch:top,topQty,reason:extra?`No sale for ${days} days and ${after} receipt events arrived after the last sale.`:days>=60?`Stock remains with no sale for ${days} days (60+ day critical rule).`:`Stock remains with no sale for ${days} days (40-day slow rule).`});
+      }}
+  }
+  moves.sort((a,b)=>b.qty-a.qty||b.monthly-a.monthly);po.sort((a,b)=>b.qty-a.qty||b.monthly-a.monthly);slow.sort((a,b)=>(a.status==='Critical'?-1:1)-(b.status==='Critical'?-1:1)||b.days-a.days||b.stock-a.stock);
+  PLAN={asOf,moves,po,slow};
+}
+function planCodeSet(){return new Set(scope().map(x=>normCode(x.code)))}
+function planRows(rows){if(!rows)return[];const codes=planCodeSet();return rows.filter(x=>codes.has(x.code))}
+function planEmpty(title){return `<header><h2>${title}</h2></header><div class="empty">Upload the sales file to activate this module. Purchase data is optional, but improves slow-stock reasons.</div>`}
+function planControls(){return `<div class="plan-tools"><div class="field"><label for="coverageDays">Planning cover</label><span><input id="coverageDays" type="number" min="7" max="120" value="${state.coverage}"> days</span></div><div class="msg">Demand = net units sold in the latest 60 days, normalized to one month. Branches qualify when demand is at least 1 unit/month.</div></div>`}
+function historyHTML(code){
+  if(!code||!SD)return'';const r=SD.byCode.get(code);if(!r)return`<div class="history"><h3>Sale history</h3><div class="empty">No sales found for this item in the uploaded file.</div></div>`;
+  const by=new Map();r.byBranch.forEach((v,b)=>{const n=stockBranchName(b);by.set(n,(by.get(n)||0)+v.qty)});const tops=[...by].sort((a,b)=>b[1]-a[1]),hist=[...r.history.values()].sort((a,b)=>b.date-a.date||b.qty-a.qty);
+  let h=`<div class="history"><h3>${esc(r.item||code)} · sale history</h3><div class="plan-note"><b>Top-selling branch:</b> ${tops.length?esc(tops[0][0])+' ('+fmt(tops[0][1])+' net units)':'No positive sale'} · <b>First sale:</b> ${dateLabel(r.first)} · <b>Last sale:</b> ${dateLabel(r.last)}</div><div class="tbl"><table class="t"><thead><tr><th>Date</th><th>Branch</th><th class="r">Net units</th></tr></thead><tbody>`;
+  hist.slice(0,180).forEach(x=>h+=`<tr><td class="mono">${dateLabel(x.date)}</td><td class="mono">${esc(stockBranchName(x.branch))}</td><td class="r mono">${fmt(x.qty)}</td></tr>`);return h+'</tbody></table></div>'+(hist.length>180?`<div class="plan-note">Showing latest 180 date/branch entries.</div>`:'')+'</div>';
+}
+function movementHTML(){
+  if(!PLAN)return planEmpty('Stock movement suggestions');let rows=planRows(PLAN.moves);if(state.focus!=='__all')rows=rows.filter(x=>x.source===state.focus||x.target===state.focus);
+  let h=`<header><h2>Stock movement suggestions · ${fmt(rows.length)}</h2><span class="msg">Warehouse/branch excess is allocated before any purchase requirement</span></header>${planControls()}<div class="plan-note"><b>Reason-led movement:</b> source stock above its demand target is moved to branches with at least 1 unit/month demand and insufficient cover.</div>`;
+  if(!rows.length)h+='<div class="empty">No transfer is required for the current filters.</div>';else{h+='<div class="tbl"><table class="t"><thead><tr><th>Item</th><th>From</th><th>To</th><th class="r">Move qty</th><th class="r">Target monthly sale</th><th class="r">Target stock</th><th>Reason</th></tr></thead><tbody>';rows.slice(0,800).forEach(x=>h+=`<tr class="click" data-v7hist="${esc(x.code)}"><td><b>${esc(x.item)}</b><br><span class="msg mono">${esc(x.code)} · ${esc(x.brand)}</span></td><td><span class="status move">${x.sourceKind==='wh'?'Warehouse':'Branch'}</span><br><span class="mono">${esc(x.source)}</span></td><td class="mono"><b>${esc(x.target)}</b></td><td class="r mono"><b>${fmt(x.qty)}</b></td><td class="r mono">${x.monthly.toFixed(1)}</td><td class="r mono">${fmt(x.targetCurrent)} / ${fmt(x.targetStock)}</td><td class="reason">${esc(x.reason)}</td></tr>`);h+='</tbody></table></div>'}
+  return h+historyHTML(state.planItem);
+}
+function slowHTML(){
+  if(!PLAN)return planEmpty('Slow and critically slow stock');let rows=planRows(PLAN.slow);let h=`<header><h2>Slow and critically slow stock · ${fmt(rows.length)}</h2><span class="msg">40 days = slow · 60 days or repeat receipts without sale = critical</span></header><div class="plan-note"><b>Critical rule:</b> stock on hand with 60+ days without sale, or 40+ days without sale plus two or more receipt events after the last sale. Receipt timing is company-level because the purchase file contains warehouse receipts.</div>`;
+  if(!PD)h+='<div class="plan-note"><b>Purchase file not loaded:</b> repeat-receipt checks are unavailable; 40/60-day sale-age rules are still applied.</div>';
+  if(!rows.length)h+='<div class="empty">No slow-moving stock matches the current filters.</div>';else{h+='<div class="tbl"><table class="t"><thead><tr><th>Status</th><th>Item</th><th class="r">Stock</th><th class="r">Days no sale</th><th>Last sale</th><th>Last receipt</th><th>Top sale branch</th><th>Reason</th></tr></thead><tbody>';rows.slice(0,800).forEach(x=>h+=`<tr class="click" data-v7hist="${esc(x.code)}"><td><span class="status ${x.status.toLowerCase()}">${x.status}</span></td><td><b>${esc(x.item)}</b><br><span class="msg mono">${esc(x.code)} · ${esc(x.brand)}</span></td><td class="r mono"><b>${fmt(x.stock)}</b></td><td class="r mono">${fmt(x.days)}</td><td class="mono">${dateLabel(x.lastSale)}</td><td class="mono">${dateLabel(x.lastPurchase)}</td><td>${esc(x.topBranch)}${x.topQty?' · '+fmt(x.topQty):''}</td><td class="reason">${esc(x.reason)}</td></tr>`);h+='</tbody></table></div>'}
+  return h+historyHTML(state.planItem);
+}
+function poAggregate(cat){
+  const rows=planRows(PLAN&&PLAN.po||[]).filter(x=>!cat||cat==='__all'||x.cat===cat),m=new Map();for(const x of rows){let a=m.get(x.code);if(!a){a={...x,qty:0,monthly:0,targets:[],reasons:[]};m.set(x.code,a)}a.qty+=x.qty;a.monthly+=x.monthly;a.targets.push(`${x.target} (${x.qty})`);a.reasons.push(x.reason)}return[...m.values()].sort((a,b)=>b.qty-a.qty||a.item.localeCompare(b.item));
+}
+function poHTML(){
+  if(!PLAN)return planEmpty('Required local PO');const rows=poAggregate(null);let h=`<header><h2>Required local PO · ${fmt(rows.length)} items</h2><div class="po-actions"><button class="btn primary" type="button" data-po-open="1">Generate local PO</button></div></header>${planControls()}<div class="plan-note"><b>Purchase quantity is calculated only after available warehouse/branch excess has been allocated.</b> This local PO intentionally excludes prices, values, GRN numbers and source PO numbers.</div>`;
+  if(!rows.length)return h+'<div class="empty">No purchase is required for the current filters.</div>';
+  h+='<div class="tbl"><table class="t"><thead><tr><th>Category</th><th>Item</th><th class="r">Required qty</th><th>Target branches</th><th class="r">Monthly demand</th><th>Reason</th></tr></thead><tbody>';rows.slice(0,800).forEach(x=>h+=`<tr class="click" data-v7hist="${esc(x.code)}"><td>${esc(x.cat)}</td><td><b>${esc(x.item)}</b><br><span class="msg mono">${esc(x.code)} · ${esc(x.brand)}</span></td><td class="r mono"><b>${fmt(x.qty)}</b></td><td>${esc(x.targets.join(' · '))}</td><td class="r mono">${x.monthly.toFixed(1)}</td><td class="reason">${esc(x.reasons[0])}</td></tr>`);return h+'</tbody></table></div>'+historyHTML(state.planItem);
+}
+function salesmenHTML(){
+  if(!SD)return planEmpty('Salesman ranking');const codes=planCodeSet(),items=[...SD.byCode.values()].filter(x=>codes.has(x.code)).sort((a,b)=>(a.item||a.code).localeCompare(b.item||b.code));if(state.salesmanItem!=='__all'&&!items.some(x=>x.code===state.salesmanItem))state.salesmanItem='__all';
+  const rows=state.salesmanItem==='__all'?items:items.filter(x=>x.code===state.salesmanItem),rank=new Map();for(const r of rows)r.salesmen.forEach((s,name)=>{let a=rank.get(name);if(!a){a={name,qty:0,invoices:new Set()};rank.set(name,a)}if(state.focus==='__all'){a.qty+=s.qty;s.invoices.forEach(v=>a.invoices.add(v))}else{s.branches.forEach((v,b)=>{if(stockBranchName(b)===state.focus){a.qty+=v.qty;v.invoices.forEach(i=>a.invoices.add(i))}})}});
+  const list=[...rank.values()].filter(x=>x.qty>0).sort((a,b)=>b.qty-a.qty||b.invoices.size-a.invoices.size),max=list[0]&&list[0].qty||1;
+  let h=`<header><h2>Salesman ranking · ${esc(state.cat)}</h2><span class="msg">Ranked by net units, not sales value</span></header><div class="plan-tools"><div class="field"><label for="salesmanItem">Product</label><select id="salesmanItem"><option value="__all">All products in current filters</option>${items.map(x=>`<option value="${esc(x.code)}" ${x.code===state.salesmanItem?'selected':''}>${esc(x.item||x.code)} · ${esc(x.code)}</option>`).join('')}</select></div><div class="msg">Use the top Category, Brand, Product type, Sub category and Branch filters to refine this ranking.</div></div>`;
+  if(!list.length)return h+'<div class="empty">No positive sales match the current filters.</div>';
+  h+='<div class="rank">';list.slice(0,100).forEach((x,i)=>h+=`<div class="rankrow"><span class="pos">#${i+1}</span><b>${esc(x.name)}</b><span class="rankbar"><i style="width:${Math.max(2,x.qty/max*100).toFixed(1)}%"></i></span><span class="mono" style="text-align:right"><b>${fmt(x.qty)}</b><br><span class="msg">${fmt(x.invoices.size)} invoices</span></span></div>`);return h+'</div>';
+}
+function openPO(cat){
+  if(!PLAN){toast('Upload stock and sales files first.');return}const cats=[...new Set(PLAN.po.map(x=>x.cat))].sort(),s=$('#poCat');s.innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');if(cat&&cats.includes(cat))s.value=cat;else if(cats.includes(state.cat))s.value=state.cat;LOCAL_PO=[];$('#poPreview').className='empty';$('#poPreview').innerHTML='Select a category and click Generate PO.';$('#poDownload').disabled=true;$('#poDialog').showModal();
+}
+function buildPOPreview(){const cat=$('#poCat').value;LOCAL_PO=poAggregate(cat);const p=$('#poPreview');if(!LOCAL_PO.length){p.className='empty';p.innerHTML='No purchase is required for this category.';$('#poDownload').disabled=true;return}p.className='';let h=`<div class="v7summary"><div class="v7card"><b>${fmt(LOCAL_PO.length)}</b><span>Items</span></div><div class="v7card"><b>${fmt(LOCAL_PO.reduce((a,x)=>a+x.qty,0))}</b><span>Required units</span></div><div class="v7card"><b>${esc(cat)}</b><span>Category</span></div></div><div class="tbl"><table class="t"><thead><tr><th>Item code</th><th>Item</th><th>Brand</th><th class="r">Required qty</th><th>Target branches</th><th>Reason</th></tr></thead><tbody>`;LOCAL_PO.forEach(x=>h+=`<tr><td class="mono">${esc(x.code)}</td><td>${esc(x.item)}</td><td>${esc(x.brand)}</td><td class="r mono"><b>${fmt(x.qty)}</b></td><td>${esc(x.targets.join(' · '))}</td><td class="reason">${esc(x.reasons[0])}</td></tr>`);p.innerHTML=h+'</tbody></table></div>';$('#poDownload').disabled=false}
+async function downloadLocalPO(){if(!LOCAL_PO.length)return;const rows=[['Category','Brand','Sub Category','Item Code','Item','Required Qty','Target Branches','Monthly Demand','Reason'],...LOCAL_PO.map(x=>[x.cat,x.brand,x.sub,x.code,x.item,x.qty,x.targets.join(' · '),Number(x.monthly.toFixed(2)),x.reasons.join(' ')])],ws=XLSX.utils.aoa_to_sheet(rows);ws['!cols']=[18,18,20,16,52,14,38,16,70].map(w=>({wch:w}));const wb=XLSX.utils.book_new();XLSX.utils.book_append_sheet(wb,ws,'Local PO');const out=XLSX.write(wb,{bookType:'xlsx',type:'array'}),cat=LOCAL_PO[0].cat.replace(/[^a-z0-9]+/gi,'_');await saveBytes(new Uint8Array(out),`Local_PO_${cat}_${new Date().toISOString().slice(0,10)}.xlsx`)}
+
 /* ---------- upload ---------- */
 function parseWorkbook(wb){
   const out=[];
@@ -1102,20 +1278,23 @@ function useSheet(i){const p=parsed[i];if(!p.nb){$('#loadMsg').className='msg er
 
 /* ---------- events ---------- */
 function on(){
+  $('#salesIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadSales(f)});
+  $('#purchaseIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadPurchases(f)});
+  const closePO=()=>$('#poDialog').close();$('#poClose').addEventListener('click',closePO);$('#poCancel').addEventListener('click',closePO);$('#poBuild').addEventListener('click',buildPOPreview);$('#poDownload').addEventListener('click',downloadLocalPO);
   $('#idealExportBtn').addEventListener('click',doIdealExport);
   $('#idealIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadIdeal(f)});
   $('#viewPanel').addEventListener('click',e=>{const tr=e.target.closest('tr[data-ib]');if(tr){state.idealSel=state.idealSel===tr.dataset.ib?null:tr.dataset.ib;renderView()}});
-  $('#viewPanel').addEventListener('change',e=>{if(e.target.matches('[data-ig]')){state.idealGrp=e.target.value;state.idealSel=null;renderView()}else if(e.target.matches('[data-sc]')){state.shareCat=e.target.value;renderView()}});
+  $('#viewPanel').addEventListener('change',e=>{if(e.target.matches('[data-ig]')){state.idealGrp=e.target.value;state.idealSel=null;renderView()}else if(e.target.matches('[data-sc]')){state.shareCat=e.target.value;renderView()}else if(e.target.id==='coverageDays'){state.coverage=Math.max(7,Math.min(120,parseInt(e.target.value)||30));buildPlan();state.planItem=null;render()}else if(e.target.id==='salesmanItem'){state.salesmanItem=e.target.value;renderView()}});
   $('#fileIn').addEventListener('change',e=>{const f=e.target.files[0];if(f)loadFile(f)});
   $('#sheetSel').addEventListener('change',e=>useSheet(+e.target.value));
   const dz=$('#drop');
   ['dragenter','dragover'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.add('over')}));
   ['dragleave','drop'].forEach(ev=>dz.addEventListener(ev,e=>{e.preventDefault();dz.classList.remove('over')}));
   dz.addEventListener('drop',e=>{const f=e.dataTransfer.files[0];if(f)loadFile(f)});
-  $('#catSel').addEventListener('change',e=>{state.cat=e.target.value;state.ptype='__all';state.sub='__all';state.shareCat=null;state.brand='__all';state.sel=null;fillBrand();render()});
-  $('#brandSel').addEventListener('change',e=>{state.brand=e.target.value;state.sel=null;render()});
-  $('#typeSel').addEventListener('change',e=>{state.ptype=e.target.value;state.sel=null;fillSub();render()});
-  $('#subSel').addEventListener('change',e=>{state.sub=e.target.value;state.sel=null;render()});
+  $('#catSel').addEventListener('change',e=>{state.cat=e.target.value;state.ptype='__all';state.sub='__all';state.shareCat=null;state.brand='__all';state.sel=null;state.planItem=null;state.salesmanItem='__all';fillBrand();render()});
+  $('#brandSel').addEventListener('change',e=>{state.brand=e.target.value;state.sel=null;state.planItem=null;state.salesmanItem='__all';render()});
+  $('#typeSel').addEventListener('change',e=>{state.ptype=e.target.value;state.sel=null;state.planItem=null;state.salesmanItem='__all';fillSub();render()});
+  $('#subSel').addEventListener('change',e=>{state.sub=e.target.value;state.sel=null;state.planItem=null;state.salesmanItem='__all';render()});
   $('#branchSel').addEventListener('change',e=>{state.focus=e.target.value;render()});
   $('#thr').addEventListener('change',e=>{const v=Math.max(2,Math.min(20,parseInt(e.target.value)||2));e.target.value=v;
     const d=['colour','series','size'].includes(state.dim)?state.dim:'colour';state.thr[d]=v;state.sel=null;render()});
@@ -1128,6 +1307,8 @@ function on(){
     if(state.thr[state.dim])$('#thr').value=state.thr[state.dim];renderKpis();renderTabs();renderView()});
   $('#exportBtn').addEventListener('click',doExport);
   $('#viewPanel').addEventListener('click',e=>{
+    const po=e.target.closest('[data-po-open]');if(po){openPO(state.cat);return}
+    const vh=e.target.closest('[data-v7hist]');if(vh){state.planItem=state.planItem===vh.dataset.v7hist?null:vh.dataset.v7hist;renderView();return}
     const b=e.target.closest('button[data-sh]');
     if(b){const [k,v]=b.dataset.sh.split(':');if(k==='by')state.shareBy=v;else if(k==='all')state.shareAll=v==='1';else state.shareMetric=v;renderView();return}
     const fb=e.target.closest('[data-fb]');
@@ -1141,7 +1322,7 @@ function on(){
     if(th){state.focus=state.focus===th.dataset.b?'__all':th.dataset.b;$('#branchSel').value=state.focus;state.sel=null;render();return}
     const sh=e.target.closest('th[data-s]');
     if(sh){const k=sh.dataset.s;scoreSort=scoreSort.k===k?{k,d:-scoreSort.d}:{k,d:-1};renderView();return}
-    const tr=e.target.closest('tr.click');
+    const tr=e.target.closest('tr.click[data-b]');
     if(tr){state.focus=tr.dataset.b;$('#branchSel').value=state.focus;state.dim='colour';$('#thr').value=state.thr.colour;state.sel=null;render()}
   });
   $('#viewPanel').addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('td.c')){e.preventDefault();e.target.click()}});

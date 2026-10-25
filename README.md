@@ -19,9 +19,16 @@ streamlit run streamlit_app.py
 
 Open the deployed app and click **Open Branch Gap Radar Pro**. On Streamlit Community Cloud, the dashboard is served from `/~/+/app/static/Branch_Gap_Radar_Pro.html`.
 
-The dashboard asks for the Excel file in the browser. Stock data is processed in the browser and is not included in this repository or uploaded to Streamlit.
+The dashboard first asks for the stock Excel file. Sales and purchase registers
+can then be added for purchasing intelligence. All files are processed in the
+browser; they are not included in this repository or uploaded to Streamlit.
 
 The current dashboard supports colour, series and size gap matrices, branch
 ranking, exact duplicates, product and brand share analysis, optional ideal-map
 slot compliance, and Excel report export. SheetJS and ExcelJS are embedded in
 the HTML so the data and report logic do not depend on a third-party CDN.
+
+With sales data loaded, the dashboard also provides demand-based stock movement
+suggestions, 40/60-day slow-stock analysis, branch stock requirements,
+quantity-only category POs, item sale history and category/product-wise salesman
+ranking. Purchase data adds receipt timing to the critical slow-stock rules.
